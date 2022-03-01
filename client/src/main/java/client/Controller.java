@@ -114,7 +114,7 @@ public class Controller implements Initializable {
                                 setAuthenticated(true);
                                 break;
                             }
-                            if(str.equals("/reg_ok") || str.equals("/reg_no")){
+                            if(str.equals(Command.REG_OK) || str.equals(Command.REG_NO)){
                                 regController.result(str);
                             }
                         } else {
@@ -129,7 +129,7 @@ public class Controller implements Initializable {
                             if (str.equals(Command.END)) {
                                 break;
                             }
-                            if (str.startsWith("/clientlist")) {
+                            if (str.startsWith(Command.CLIENT_LIST)) {
                                 String[] token = str.split(" ");
 
                                 Platform.runLater(() -> {
