@@ -1,5 +1,7 @@
 package server;
 
+import constants.Command;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -78,7 +80,7 @@ public class Server {
     }
 
     public void broadcastClientList() {
-        StringBuilder sb = new StringBuilder("/clientlist");
+        StringBuilder sb = new StringBuilder(Command.CLIENT_LIST);
 
         for (ClientHandler c : clients) {
             sb.append(" ").append(c.getNickname());
