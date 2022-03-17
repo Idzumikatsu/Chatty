@@ -8,6 +8,8 @@
         <outputRelativeToContentRoot value="true" />
         <module name="client" />
         <module name="server" />
+        <module name="Client" />
+        <module name="Server" />
         <module name="Command" />
       </profile>
     </annotationProcessing>
