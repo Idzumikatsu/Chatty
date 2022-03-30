@@ -28,7 +28,7 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
-                    socket.setSoTimeout(5000);
+                    socket.setSoTimeout(120000);
                     //цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
@@ -53,6 +53,7 @@ public class ClientHandler {
                                         sendMsg(Command.AUTH_OK + nickname);
                                         authenticated = true;
                                         server.subscribe(this);
+                                        socket.setSoTimeout(0);
                                         break;
                                     } else {
                                         sendMsg("Учетная запись уже используется");
@@ -77,21 +78,37 @@ public class ClientHandler {
                     }
                     //цикл работы
                     while (authenticated) {
-                        socket.setSoTimeout(0);
 
                         String str = in.readUTF();
 
                         if (str.startsWith("/")) {
+
                             if (str.equals(Command.END)) {
                                 sendMsg(Command.END);
                                 break;
                             }
+
                             if (str.startsWith(Command.W)) {
                                 String[] token = str.split(" ", 3);
                                 if (token.length < 3) {
                                     continue;
                                 }
                                 server.privateMsg(this, token[1], token[2]);
+                            }
+
+                            if (str.startsWith(Command.CHANGE_NICK)) {
+                                String[] token = str.split(" ");
+                                if (token.length < 3) {
+                                    continue;
+                                }
+
+                                if (server.getAuthService().changeNickname(token[1], token[2])) {
+                                    sendMsg(Command.CHANGE_NICK_OK + " " + token[2]);
+                                    nickname = token[2];
+                                    server.broadcastClientList();
+                                } else {
+                                    sendMsg(Command.CHANGE_NICK_NO);
+                                }
                             }
 
                         } else {
@@ -106,6 +123,7 @@ public class ClientHandler {
                     server.unsubscribe(this);
                     System.out.println("Client disconnected");
                     try {
+                        DataBaseAuthService.disconnect();
                         socket.close();
                     } catch (IOException e) {
                         e.printStackTrace();

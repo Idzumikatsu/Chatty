@@ -45,7 +45,7 @@ public class Controller implements Initializable {
     public ListView<String> clientList;
 
     private Socket socket;
-    private static final int PORT = 8189;
+    private static final int PORT = 8188;
     private static final String ADDRESS = "localhost";
 
     private DataInputStream in;
@@ -123,12 +123,15 @@ public class Controller implements Initializable {
                     }
                     //цикл работы
                     while (authenticated) {
+
                         String str = in.readUTF();
 
                         if (str.startsWith("/")) {
+
                             if (str.equals(Command.END)) {
                                 break;
                             }
+
                             if (str.startsWith(Command.CLIENT_LIST)) {
                                 String[] token = str.split(" ");
 
@@ -138,6 +141,16 @@ public class Controller implements Initializable {
                                         clientList.getItems().add(token[i]);
                                     }
                                 });
+                            }
+
+                            if (str.startsWith(Command.CHANGE_NICK_OK)) {
+                                String[] token = str.split(" ");
+                                nickname = token[1].trim();
+                                setTitle(nickname);
+                                textArea.appendText("Никнейм успешно изменен\n");
+
+                            } else if (str.startsWith(Command.CHANGE_NICK_NO)){
+                                textArea.appendText("Изменение никнейма не удалось\n");
                             }
 
                         } else {
@@ -230,7 +243,6 @@ public class Controller implements Initializable {
         if (regStage == null) {
             createRegStage();
         }
-
         regStage.show();
     }
 

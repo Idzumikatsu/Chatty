@@ -11,14 +11,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Server {
     private ServerSocket server;
     private Socket socket;
-    private final int PORT = 8189;
+    private final int PORT = 8188;
 
     private List<ClientHandler> clients;
     private AuthService authService;
 
     public Server() {
         clients = new CopyOnWriteArrayList<>();
-        authService = new SimpleAuthService();
+        authService = new DataBaseAuthService();
 
         try {
             server = new ServerSocket(PORT);
