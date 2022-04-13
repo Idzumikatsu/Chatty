@@ -3,7 +3,6 @@ package client;
 import constants.Command;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -18,14 +17,14 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.WindowEvent;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.URL;
-import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -45,7 +44,7 @@ public class Controller implements Initializable {
     public ListView<String> clientList;
 
     private Socket socket;
-    private static final int PORT = 8188;
+    private static final int PORT = 8189;
     private static final String ADDRESS = "localhost";
 
     private DataInputStream in;
@@ -99,6 +98,7 @@ public class Controller implements Initializable {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
 
+
             new Thread(() -> {
                 try {
                     //цикл аутентификации
@@ -112,9 +112,10 @@ public class Controller implements Initializable {
                             if (str.startsWith(Command.AUTH_OK)) {
                                 nickname = str.split(" ")[1];
                                 setAuthenticated(true);
+                                showCommonHistory();
                                 break;
                             }
-                            if(str.equals(Command.REG_OK) || str.equals(Command.REG_NO)){
+                            if (str.equals(Command.REG_OK) || str.equals(Command.REG_NO)) {
                                 regController.result(str);
                             }
                         } else {
@@ -126,9 +127,22 @@ public class Controller implements Initializable {
 
                         String str = in.readUTF();
 
+                        //запись истории чата для конкретного клиента
+                        String personalHistory = "history_" + loginField.getText().trim() + ".txt";
+                        FileOutputStream personalWriter = new FileOutputStream(personalHistory, true);
+
+                        //запись общей истории чата
+                        if (str.startsWith("[ " + loginField.getText().trim() + " ]")) {
+                            String[] token = str.split("]" + " to " + "\\[");
+                            if (token.length == 1) {
+                                writeCommonHistory(str);
+                            }
+                        }
+
                         if (str.startsWith("/")) {
 
                             if (str.equals(Command.END)) {
+                                personalWriter.close();
                                 break;
                             }
 
@@ -149,11 +163,14 @@ public class Controller implements Initializable {
                                 setTitle(nickname);
                                 textArea.appendText("Никнейм успешно изменен\n");
 
-                            } else if (str.startsWith(Command.CHANGE_NICK_NO)){
+                            } else if (str.startsWith(Command.CHANGE_NICK_NO)) {
                                 textArea.appendText("Изменение никнейма не удалось\n");
                             }
-
                         } else {
+                            personalWriter.write(str.getBytes(StandardCharsets.UTF_8));
+                            personalWriter.write(13);
+                            personalWriter.close();
+
                             textArea.appendText(str + "\n");
                         }
                     }
@@ -167,9 +184,7 @@ public class Controller implements Initializable {
                         e.printStackTrace();
                     }
                 }
-
             }).start();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -183,6 +198,39 @@ public class Controller implements Initializable {
             textField.requestFocus();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void writeCommonHistory(String str) {
+        try {
+            String sharedHistory = "shared_history.txt";
+            FileOutputStream sharedWriter = new FileOutputStream(sharedHistory, true);
+
+            sharedWriter.write(str.getBytes(StandardCharsets.UTF_8));
+            sharedWriter.write(13);
+            sharedWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void showCommonHistory() {
+        if (Files.exists(Paths.get("shared_history.txt"))) {
+            try {
+                ArrayList<String> list = new ArrayList<>(Files.readAllLines(Paths.get("shared_history.txt")));
+                if (list.size() < 100) {
+                    for (int i = 0; i < list.size(); i++) {
+                        textArea.appendText(list.get(i) + "\n");
+                    }
+                } else {
+                    for (int i = 0; i < 100; i++) {
+                        textArea.appendText(list.get(i) + "\n");
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
