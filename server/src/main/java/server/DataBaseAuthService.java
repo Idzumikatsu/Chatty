@@ -1,11 +1,17 @@
 package server;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.*;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class DataBaseAuthService implements AuthService {
 
     private static Connection connection;
     private static Statement stmt;
+
+    private static final Logger logger = Logger.getLogger(DataBaseAuthService.class.getName());
 
     private static final String REG_NEW_USER = "INSERT INTO users_table (login, password, nickname) VALUES (?, ?, ?);";
     private static final String AUTH = "SELECT * FROM users_table WHERE login = ? AND password = ?;";
@@ -22,11 +28,19 @@ public class DataBaseAuthService implements AuthService {
     }
 
     public static void connect(){
+        try {
+            LogManager manager = LogManager.getLogManager();
+            manager.readConfiguration(new FileInputStream("logging.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         if (connection == null) {
             try {
                 Class.forName("org.sqlite.JDBC");
                 connection = DriverManager.getConnection("jdbc:sqlite:users.db");
                 stmt = connection.createStatement();
+                logger.severe("Database connected");
             } catch (SQLException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
