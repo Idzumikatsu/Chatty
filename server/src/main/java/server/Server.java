@@ -2,11 +2,14 @@ package server;
 
 import constants.Command;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class Server {
     private ServerSocket server;
@@ -16,17 +19,22 @@ public class Server {
     private List<ClientHandler> clients;
     private AuthService authService;
 
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
+
     public Server() {
         clients = new CopyOnWriteArrayList<>();
         authService = new DataBaseAuthService();
 
         try {
+            LogManager manager = LogManager.getLogManager();
+            manager.readConfiguration(new FileInputStream("logging.properties"));
+
             server = new ServerSocket(PORT);
-            System.out.println("Server started");
+            logger.severe("Server started");
 
             while (true) {
                 socket = server.accept();
-                System.out.println("Client connected");
+                logger.severe("Client connected");
                 new ClientHandler(this, socket);
             }
 
@@ -40,6 +48,7 @@ public class Server {
             }
             try {
                 server.close();
+                logger.severe("Server shutdown");
             } catch (IOException e) {
                 e.printStackTrace();
             }
